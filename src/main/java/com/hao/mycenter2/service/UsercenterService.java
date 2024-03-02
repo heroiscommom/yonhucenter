@@ -2,6 +2,9 @@ package com.hao.mycenter2.service;
 
 import com.hao.mycenter2.model.Usercenter;
 import com.baomidou.mybatisplus.extension.service.IService;
+import jakarta.servlet.http.HttpServletRequest;
+
+import java.net.http.HttpRequest;
 
 /**
  * 用户服务
@@ -11,6 +14,9 @@ import com.baomidou.mybatisplus.extension.service.IService;
  *
 */
 public interface UsercenterService extends IService<Usercenter> {
+    /**
+     * 用户登录态键
+     */
 
     /**
      *  用户注册
@@ -21,4 +27,20 @@ public interface UsercenterService extends IService<Usercenter> {
      * @return 新用户id
      */
     long userRegister(String userAccount,String userPassword,String checkPassword);
+
+    /**
+     * 用户登录
+     *
+     * @param userAccount 账号
+     * @param userPassword 密码
+     * @return 返回脱敏后的用户信息
+     */
+    Usercenter dologin(String userAccount, String userPassword, HttpServletRequest request);
+
+    /**
+     * 用户脱敏
+     * @param originUser 脱敏前user
+     * @return 脱敏后user
+     */
+    Usercenter getSafety(Usercenter originUser);
 }

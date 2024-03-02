@@ -16,6 +16,7 @@
             <result property="createtime" column="createTime" jdbcType="TIMESTAMP"/>
             <result property="updatetime" column="updateTime" jdbcType="TIMESTAMP"/>
             <result property="isdeleted" column="iSdeleted" jdbcType="TINYINT"/>
+            <result property="role" column="role" jdbcType="TINYINT"/>
             <result property="useraccount" column="userAccount" jdbcType="VARCHAR"/>
             <result property="userstatus" column="userStatus" jdbcType="INTEGER"/>
     </resultMap>
@@ -23,7 +24,7 @@
     <sql id="Base_Column_List">
         id,username,avatarUrl,
         gender,userPassword,phone,
-        email,isValid,createTime,
+        email,isValid,createTime,role
         updateTime,iSdeleted,userAccount,
         userStatus
     </sql>
