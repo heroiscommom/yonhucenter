@@ -2,6 +2,8 @@ package com.hao.mycenter2.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.hao.mycenter2.common.ErrorCode;
+import com.hao.mycenter2.exception.BusinessException;
 import com.hao.mycenter2.service.UsercenterService;
 import com.hao.mycenter2.model.Usercenter;
 import com.hao.mycenter2.mapper.UsercenterMapper;
@@ -43,19 +45,19 @@ public class UsercenterServiceImpl extends ServiceImpl<UsercenterMapper, Usercen
     public long userRegister(String userAccount, String userPassword, String checkPassword) {
         //1，校验
         if(StringUtils.isAllBlank(userAccount,userPassword,checkPassword)){
-            return -1;
+            throw new BusinessException(ErrorCode.NULL_ERROR,"注册参数缺失");
         }
         if(userAccount.length() < 4){
-            return -1;
+            throw new BusinessException(ErrorCode.NULL_ERROR,"用户账号过短");
         }
         if(userPassword.length() < 8 || checkPassword.length() < 8){
-            return -1;
+            throw new BusinessException(ErrorCode.NULL_ERROR,"用户密码过短");
         }
         // 特殊字符的校验
         String vaildPattern = "[`~!@#$%^&*()+=|{}':;',\\\\[\\\\].<>/?~！@#￥%……&*（）——+|{}【】‘；：”“’。，、？\\s]";
         Matcher matcher = Pattern.compile(vaildPattern).matcher(userAccount);
         if(matcher.find()){
-            return -1;
+            throw new BusinessException(ErrorCode.NULL_ERROR,"存在特殊字符");
         }
         //密码和校验码相同
         if(!userPassword.equals(checkPassword)){
@@ -115,7 +117,7 @@ public class UsercenterServiceImpl extends ServiceImpl<UsercenterMapper, Usercen
         Usercenter safetyUser = getSafety(user);
         //4，记录用户的登录态
         request.getSession().setAttribute(USER_LOGIN_STATE,safetyUser);
-        return user;
+        return safetyUser;
     }
 
     /**
@@ -125,6 +127,9 @@ public class UsercenterServiceImpl extends ServiceImpl<UsercenterMapper, Usercen
      */
     @Override
     public Usercenter getSafety(Usercenter originUser){
+        if(originUser == null){
+            return null;
+        }
         //3，用户脱敏
         Usercenter safetyUser = new Usercenter();
         safetyUser.setId(originUser.getId());
@@ -138,6 +143,16 @@ public class UsercenterServiceImpl extends ServiceImpl<UsercenterMapper, Usercen
         safetyUser.setUseraccount(originUser.getUseraccount());
         safetyUser.setUserstatus(originUser.getUserstatus());
         return safetyUser;
+    }
+
+    /**
+     * 用户注销接口实现
+     * @param request 请求
+     */
+    @Override
+    public int userLogout(HttpServletRequest request) {
+        request.getSession().removeAttribute(USER_LOGIN_STATE);
+        return 1;
     }
 }
 

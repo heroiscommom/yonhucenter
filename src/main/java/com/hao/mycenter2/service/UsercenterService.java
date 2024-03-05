@@ -43,4 +43,10 @@ public interface UsercenterService extends IService<Usercenter> {
      * @return 脱敏后user
      */
     Usercenter getSafety(Usercenter originUser);
+
+    /**
+     *  用户注销
+     *
+     */
+    int userLogout(HttpServletRequest request);
 }

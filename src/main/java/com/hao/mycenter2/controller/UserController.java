@@ -1,7 +1,11 @@
 package com.hao.mycenter2.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.hao.mycenter2.common.BaseResponse;
+import com.hao.mycenter2.common.ErrorCode;
+import com.hao.mycenter2.common.ResultUtils;
 import com.hao.mycenter2.constant.UserConstant;
+import com.hao.mycenter2.exception.BusinessException;
 import com.hao.mycenter2.model.Usercenter;
 import com.hao.mycenter2.model.request.UserLoginRequest;
 import com.hao.mycenter2.model.request.UserRegisterRequest;
@@ -31,20 +35,35 @@ public class UserController {
     @Resource
     private UsercenterService usercenterService;
     @PostMapping("/register")
-    public Long userRegister(@RequestBody UserRegisterRequest userRegisterRequest){
+    public BaseResponse<Long> userRegister(@RequestBody UserRegisterRequest userRegisterRequest){
         if(userRegisterRequest == null){
-            return null;
+            //return ResultUtils.error(ErrorCode.PARAMS_ERROR);
+            throw new BusinessException(ErrorCode.NULL_ERROR,"注册参数缺失");
         }
         String userAccount = userRegisterRequest.getUserAccount();
         String userPassword = userRegisterRequest.getUserPassword();
         String checkPassword = userRegisterRequest.getCheckPassword();
         if(StringUtils.isAllBlank(userAccount,userPassword,checkPassword)){
+            throw new BusinessException(ErrorCode.NULL_ERROR,"注册参数缺失");
+        }
+        long result = usercenterService.userRegister(userAccount, userPassword, checkPassword);
+        return ResultUtils.success(result);
+    }
+    @GetMapping("/current")
+    public BaseResponse<Usercenter> currentUser(HttpServletRequest request){
+        Object userObj = request.getSession().getAttribute(USER_LOGIN_STATE);
+        Usercenter currentUser = (Usercenter) userObj;
+        if(currentUser == null){
             return null;
         }
-        return usercenterService.userRegister(userAccount, userPassword, checkPassword);
+        Long userId = currentUser.getId();
+
+        Usercenter user = usercenterService.getById(userId);
+        Usercenter safetyUser = usercenterService.getSafety(user);
+        return ResultUtils.success(safetyUser);
     }
     @PostMapping("/login")
-    public Usercenter userLogin(@RequestBody UserLoginRequest userLoginRequest, HttpServletRequest request){
+    public BaseResponse<Usercenter> userLogin(@RequestBody UserLoginRequest userLoginRequest, HttpServletRequest request){
         if(userLoginRequest == null){
             return null;
         }
@@ -53,20 +72,31 @@ public class UserController {
         if(StringUtils.isAllBlank(userAccount,userPassword)){
             return null;
         }
-        return usercenterService.dologin(userAccount, userPassword,request);
+        Usercenter dologin = usercenterService.dologin(userAccount, userPassword, request);
+        return ResultUtils.success(dologin);
+    }
+
+    @PostMapping("/logout")
+    public BaseResponse<Integer> userLogout(HttpServletRequest request){
+        if(request == null){
+            return null;
+        }
+        int result = usercenterService.userLogout(request);
+        return ResultUtils.success(result);
     }
 
     @GetMapping("/search")
-    public List<Usercenter> searchUser(String username,HttpServletRequest request){
+    public BaseResponse<List<Usercenter>> searchUser(String username,HttpServletRequest request){
         if(!isAdmin(request)){
-            return new ArrayList<>();
+            throw new BusinessException(ErrorCode.NULL_ERROR);
         }
         QueryWrapper<Usercenter> queryWrapper = new QueryWrapper<>();
         if(StringUtils.isNotBlank(username)){
             queryWrapper.like("username",username);
         }
         List<Usercenter> userList = usercenterService.list(queryWrapper);
-        return userList.stream().map(Usercenter -> usercenterService.getSafety(Usercenter)).collect(Collectors.toList());
+        List<Usercenter> result = userList.stream().map(Usercenter -> usercenterService.getSafety(Usercenter)).collect(Collectors.toList());
+        return ResultUtils.success(result);
     }
     @GetMapping("/delete")
     public boolean deleteUser(@RequestBody long id,HttpServletRequest request){
